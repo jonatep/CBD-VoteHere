@@ -36,6 +36,7 @@ app.route('/todos/:id')
   .put(updateTodoItem)
   .delete(deleteTodoItem);
 
+//Autenticacion
 app.route("/login")
   .get(view_login)
   .post(login_post);
@@ -43,11 +44,14 @@ app.route("/login")
 app.route("/logout")
   .get(logout);
 
-app.route("/restricted")
-  .get(restrict);
-
 app.route("/register")
   .post(register);
+
+//Votaciones
+
+app.route("/create-voting")
+  .get(form_voting)
+  .post(createVotingItem);
 //If we reach this middleware the route could not be handled and must be unknown.
 app.use(handle404);
 
@@ -66,13 +70,6 @@ app.use(function(req, res, next){
   if (msg) res.locals.message = '<p class="msg success">' + msg + '</p>';
   next();
 });
-
-var users = {
-  tj: { name: 'tj' }
-};
-
-
-
 
 // Authenticate using our plain-object database of doom!
 
@@ -97,13 +94,11 @@ function authenticate(name, pass, app, fn) {
   });
 }
 
-function restrict(req, res, next) {
+function is_authenticated(req) {
   if (req.session.user) {
-    console.log(req.session.user);
-    next();
+    return true;
   } else {
-    req.session.error = 'Access denied!';
-    res.redirect('/login');
+    return false;
   }
 }
 
@@ -119,7 +114,7 @@ function logout(req, res){
   // destroy the user's session to log them out
   // will be re-created next request
   req.session.destroy(function(){
-    res.redirect('/');
+    res.redirect('/create-voting');
   });
 };
 
@@ -180,6 +175,38 @@ function register(req, res, next) {
     });    
   });
 };
+
+//Form Creacion Voting
+function form_voting(req, res) {
+  authenticated = is_authenticated(req);
+  if(authenticated){
+    res.render('voting');
+  }
+  else{
+    res.render("login");
+  }
+}
+
+//Create Voting
+function createVotingItem(req, res, next) {
+  authenticated = is_authenticated(req);
+  if(authenticated){
+    var votingItem = req.body;
+
+    console.dir(votingItem);
+  
+    r.table('votings').insert(votingItem, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
+      if(err) {
+        return next(err);
+      }
+  
+      res.json(result.changes[0].new_val);
+    });
+  }
+  else{
+    res.render("login");
+  }
+}
 
 /*
  * Retrieve all todo items.
@@ -329,6 +356,18 @@ async.waterfall([
         containsTable,
         {created: 0},
         r.tableCreate('users', {primary_key: "username"})
+      );
+    }).run(connection, function(err) {
+      callback(err, connection);
+    });
+  },
+  function createVotings(connection, callback) {
+    //Create the table of votings if needed.
+    r.tableList().contains('votings').do(function(containsTable) {
+      return r.branch(
+        containsTable,
+        {created: 0},
+        r.tableCreate('votings')
       );
     }).run(connection, function(err) {
       callback(err, connection);

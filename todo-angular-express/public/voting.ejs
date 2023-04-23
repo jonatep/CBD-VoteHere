@@ -1,0 +1,26 @@
+<%- include('head', { title: 'Voting Creation' }) -%>
+
+<h1>Voting</h1>
+<form method="post" action="/create-voting">
+  <p>
+    <label for="name">Name:</label>
+    <input type="text" name="name" id="name">
+  </p>
+  <p>
+    <label for="description">Description:</label>
+    <input type="text" name="description" id="description">
+  </p>
+  <p>
+    <label for="last_date">Fecha límite:</label>
+    <input type="date" name="last_date" id="last_date">
+  </p>
+  <p>
+    <label for="last_hour">Hora límite:</label>
+    <input type="time" name="last_hour" id="last_hour" min="00:00" max="23:59">
+  </p>
+
+  <p>
+    <input type="submit" value="Crear">
+  </p>
+</form>
+<%- include('foot') -%>
