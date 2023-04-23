@@ -1,7 +1,7 @@
 module.exports = {
   rethinkdb: {
-    host: 'localhost',
-    port: 28015,
+    host: '127.0.0.1',
+    port: 32769,
     authKey: '',
     db: 'rethinkdb_ex'
   },
