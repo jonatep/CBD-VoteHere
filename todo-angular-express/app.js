@@ -7,11 +7,24 @@ var config = require(__dirname + '/config.js');
 
 var app = express();
 
+//Seguridad y Login
+var hash = require('pbkdf2-password')()
+var path = require('path');
+var session = require('express-session');
 
 //For serving the index.html and all the other front-end assets.
 app.use(express.static(__dirname + '/public'));
 
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'public'));
+
+app.use(session({
+  resave: false, // don't save session if unmodified
+  saveUninitialized: false, // don't create session until something stored
+  secret: 'shhhh, very secret'
+}));
 
 //The REST routes for "todos".
 app.route('/todos')
@@ -23,12 +36,150 @@ app.route('/todos/:id')
   .put(updateTodoItem)
   .delete(deleteTodoItem);
 
+app.route("/login")
+  .get(view_login)
+  .post(login_post);
+  
+app.route("/logout")
+  .get(logout);
+
+app.route("/restricted")
+  .get(restrict);
+
+app.route("/register")
+  .post(register);
 //If we reach this middleware the route could not be handled and must be unknown.
 app.use(handle404);
 
 //Generic error handling middleware.
 app.use(handleError);
 
+// Session-persisted message middleware
+
+app.use(function(req, res, next){
+  var err = req.session.error;
+  var msg = req.session.success;
+  delete req.session.error;
+  delete req.session.success;
+  res.locals.message = '';
+  if (err) res.locals.message = '<p class="msg error">' + err + '</p>';
+  if (msg) res.locals.message = '<p class="msg success">' + msg + '</p>';
+  next();
+});
+
+var users = {
+  tj: { name: 'tj' }
+};
+
+
+
+
+// Authenticate using our plain-object database of doom!
+
+function authenticate(name, pass, app, fn) {
+  if (!module.parent) console.log('authenticating %s:%s', name, pass);
+  var user;
+  r.table('users').get(name).run(app._rdbConn, function(err, result) {
+    if(err) {
+      return next(err);
+    }
+    user = result;
+    // query the db for the given username
+    if (!user) return fn(null, null)
+    // apply the same algorithm to the POSTed password, applying
+    // the hash against the pass / salt, if there is a match we
+    // found the user
+    hash({ password: pass, salt: user.salt }, function (err, pass, salt, hash) {
+      if (err) return fn(err);
+      if (hash === user.hash) return fn(null, user)
+      fn(null, null)
+    });
+  });
+}
+
+function restrict(req, res, next) {
+  if (req.session.user) {
+    console.log(req.session.user);
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+}
+
+app.get('/', function(req, res){
+  res.redirect('/login');
+});
+
+function restricted(req, res){
+  res.send('Wahoo! restricted area, click to <a href="/logout">logout</a>');
+};
+
+function logout(req, res){
+  // destroy the user's session to log them out
+  // will be re-created next request
+  req.session.destroy(function(){
+    res.redirect('/');
+  });
+};
+
+function view_login(req, res){
+  res.render('login');
+};
+
+function login_post(req, res, next) {
+  authenticate(req.body.username, req.body.password, req.app, function(err, user){
+    if (err) return next(err)
+    if (user) {
+      // Regenerate session when signing in
+      // to prevent fixation
+      req.session.regenerate(function(){
+        // Store the user's primary key
+        // in the session store to be retrieved,
+        // or in this case the entire user object
+        req.session.user = user;
+        req.session.success = 'Authenticated as ' + user.name
+          + ' click to <a href="/logout">logout</a>. '
+          + ' You may now access <a href="/restricted">/restricted</a>.';
+        res.redirect('back');
+      });
+    } else {
+      req.session.error = 'Authentication failed, please check your '
+        + ' username and password.'
+        + ' (use "tj" and "foobar")';
+      res.redirect('/login');
+    }
+  });
+};
+
+function register(req, res, next) {
+  var user = req.body;
+
+  console.dir(user);
+
+  // when you create a user, generate a salt
+  // and hash the password ('foobar' is the pass here)
+  var salt_user;
+  var hash_user;
+  hash({ password: req.body.password }, function (err, pass, salt, hash) {
+    if (err) throw err;
+
+    salt_user = salt;
+    hash_user = hash;
+
+    delete user.password;
+    user.salt = salt_user;
+    user.hash = hash_user;
+
+    r.table('users').insert(user, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
+      if(err) {
+        return next(err);
+      }
+  
+      res.json(result.changes[0].new_val);
+    });    
+  });
+};
 
 /*
  * Retrieve all todo items.
@@ -166,6 +317,18 @@ async.waterfall([
         containsTable,
         {created: 0},
         r.tableCreate('todos')
+      );
+    }).run(connection, function(err) {
+      callback(err, connection);
+    });
+  },
+  function createUsers(connection, callback) {
+    //Create the table of users if needed.
+    r.tableList().contains('users').do(function(containsTable) {
+      return r.branch(
+        containsTable,
+        {created: 0},
+        r.tableCreate('users', {primary_key: "username"})
       );
     }).run(connection, function(err) {
       callback(err, connection);
