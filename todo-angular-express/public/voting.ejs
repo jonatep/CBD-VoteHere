@@ -1,26 +1,57 @@
 <%- include('head', { title: 'Voting Creation' }) -%>
+<head>
+  <title>Create Voting</title>
+</head>
+<body>
+  <header>
+    <h1>Create voting</h1>
+  </header>
 
-<h1>Voting</h1>
-<form method="post" action="/create-voting">
-  <p>
-    <label for="name">Name:</label>
-    <input type="text" name="name" id="name">
-  </p>
-  <p>
-    <label for="description">Description:</label>
-    <input type="text" name="description" id="description">
-  </p>
-  <p>
-    <label for="last_date">Fecha límite:</label>
-    <input type="date" name="last_date" id="last_date">
-  </p>
-  <p>
-    <label for="last_hour">Hora límite:</label>
-    <input type="time" name="last_hour" id="last_hour" min="00:00" max="23:59">
-  </p>
+  <div class="container">
+    <div class="form-container">
+      <h2>Voting</h2>
+      <form method="post" action="/create-voting">
+        <div>
+          <label for="name">Name:</label>
+          <input type="text" name="name" id="name">
+        </div>
+        <div style="margin-top: 5px;">
+          <label for="description">Description:</label>
+          <input type="text" name="description" id="description">
+        </div>
+        <div style="margin-top: 5px;">
+          <label for="last_date">Fecha límite:</label>
+          <input type="date" name="last_date" id="last_date">
+        </div>
+        <div style="margin-top: 5px;">
+          <label for="last_hour">Hora límite:</label>
+          <input type="time" name="last_hour" id="last_hour" min="00:00" max="23:59">
+        </div>
+        <div style="margin-top: 5px;" id="opciones">
+          <label for="opcion">Opciones:</label>
+          <input type="text" id="opcion" name="opcion"/>
+        </div>
+        <div>
+          <button type="button" onclick="agregarOpcion()">Agregar opción</button>
+        </div>
+        <div>
+          <input type="submit" value="Crear">
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
 
-  <p>
-    <input type="submit" value="Crear">
-  </p>
-</form>
+<script>
+  function agregarOpcion() {
+    var opcionesDiv = document.getElementById("opciones");
+    var nuevaOpcion = document.createElement("input");
+    nuevaOpcion.type = "text";
+    nuevaOpcion.name = "opcion";
+    nuevaOpcion.id = "opcion";
+    nuevaOpcion.style = "margin-top: 5px;"
+    opcionesDiv.appendChild(nuevaOpcion);
+  }
+</script>
+
 <%- include('foot') -%>

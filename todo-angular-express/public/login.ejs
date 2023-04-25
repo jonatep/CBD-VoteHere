@@ -1,33 +1,48 @@
-<%- include('head', { title: 'Authentication Example' }) -%>
+<%- include('head', { title: 'Authentication' }) -%>
+<head>
+  <title>Authentication</title>
+</head>
+<body>
+  <header>
+    <h1>Authentication</h1>
+  </header>
+  <script>var name = "<%= user %>";</script>
+  <div class="container">
+    <div class="form-container">
+      <h2>Login</h2>
+      <form method="post" action="/login">
+        <div>
+          <label for="username">Username:</label>
+          <input type="text" name="username" id="username">
+        </div>
+        <div style="margin-top: 5px;">
+          <label for="password">Password:</label>
+          <input type="password" name="password" id="password">
+        </div>
+        <div>
+          <input type="submit" style="margin: 1%;" value="Login">
+        </div>
+      </form>
+    </div>
 
-<h1>Login</h1>
-<form method="post" action="/login">
-  <p>
-    <label for="username">Username:</label>
-    <input type="text" name="username" id="username">
-  </p>
-  <p>
-    <label for="password">Password:</label>
-    <input type="text" name="password" id="password">
-  </p>
-  <p>
-    <input type="submit" value="Login">
-  </p>
-</form>
+    <div class="form-container">
+      <h2>Register</h2>
+      <form method="post" action="/register">
+        <div>
+          <label for="username">Username:</label>
+          <input type="text" name="username" id="username">
+        </div>
+        <div style="margin-top: 5px;">
+          <label for="password">Password:</label>
+          <input type="password" name="password" id="password">
+        </div>
+        <div>
+          <input type="submit" style="margin: 1%;" value="Register">
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
 
-<h1>Register</h1>
-<form method="post" action="/register">
-  <p>
-    <label for="username">Username:</label>
-    <input type="text" name="username" id="username">
-  </p>
-  <p>
-    <label for="password">Password:</label>
-    <input type="text" name="password" id="password">
-  </p>
-  <p>
-    <input type="submit" value="Register">
-  </p>
-</form>
 
 <%- include('foot') -%>

@@ -52,6 +52,14 @@ app.route("/register")
 app.route("/create-voting")
   .get(form_voting)
   .post(createVotingItem);
+
+app.route("/voting-list")
+  .get(listVotings);
+
+//Respuestas
+
+app.route("/answer-voting")
+  .post(createAnswerVoting);
 //If we reach this middleware the route could not be handled and must be unknown.
 app.use(handle404);
 
@@ -114,12 +122,13 @@ function logout(req, res){
   // destroy the user's session to log them out
   // will be re-created next request
   req.session.destroy(function(){
-    res.redirect('/create-voting');
+    res.redirect('/login');
   });
 };
 
 function view_login(req, res){
-  res.render('login');
+  var user = req.session.user;
+  res.render('login', {user: user});
 };
 
 function login_post(req, res, next) {
@@ -136,7 +145,7 @@ function login_post(req, res, next) {
         req.session.success = 'Authenticated as ' + user.name
           + ' click to <a href="/logout">logout</a>. '
           + ' You may now access <a href="/restricted">/restricted</a>.';
-        res.redirect('back');
+        res.redirect('/voting-list');
       });
     } else {
       req.session.error = 'Authentication failed, please check your '
@@ -179,11 +188,12 @@ function register(req, res, next) {
 //Form Creacion Voting
 function form_voting(req, res) {
   authenticated = is_authenticated(req);
+  var user = req.session.user;
   if(authenticated){
-    res.render('voting');
+    res.render('voting', {user: req.session.user});
   }
   else{
-    res.render("login");
+    res.render("login", {user: req.session.user});
   }
 }
 
@@ -204,9 +214,63 @@ function createVotingItem(req, res, next) {
     });
   }
   else{
-    res.render("login");
+    res.render("login", {user: req.body.user});
   }
 }
+
+//Answer Voting
+function createAnswerVoting(req, res, next) {
+  authenticated = is_authenticated(req);
+  if(authenticated){
+    var answerItem = req.body;
+
+    console.dir(answerItem);
+  
+    r.table('answers').insert(answerItem, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
+      if(err) {
+        return next(err);
+      }
+  
+      res.redirect("voting-list")
+    });
+  }
+  else{
+    res.render("login", {user: req.body.user});
+  }
+}
+
+//Retrieve all votings
+function listVotings(req, res, next) {
+  res_answers = {};
+  r.table('votings').run(req.app._rdbConn, function(err, cursor) {
+    if(err) {
+      return next(err);
+    }
+
+    //Retrieve all the votings in an array.
+    cursor.toArray(function(err, result) {
+      if(err) {
+        return next(err);
+      }
+
+      result.forEach(function(voting) {
+        r.table('answers').get(voting.id).run(req.app._rdbConn, function(err, answers) {
+          cursor.toArray(function(err, answers) {
+            if(err) {
+              return next(err);
+            }
+            console.log(answers);
+            res_answers[voting.id] = answers;
+          });
+
+        });
+      });
+      console.log(res_answers);
+      res.render('votinglist', {votings: result, user:req.session.user, answers: res_answers});
+    });
+  });
+}
+
 
 /*
  * Retrieve all todo items.
@@ -368,6 +432,18 @@ async.waterfall([
         containsTable,
         {created: 0},
         r.tableCreate('votings')
+      );
+    }).run(connection, function(err) {
+      callback(err, connection);
+    });
+  },
+  function createAnswers(connection, callback) {
+    //Create the table of answers if needed.
+    r.tableList().contains('answers').do(function(containsTable) {
+      return r.branch(
+        containsTable,
+        {created: 0},
+        r.tableCreate('answers', {primary_key: "voting"})
       );
     }).run(connection, function(err) {
       callback(err, connection);

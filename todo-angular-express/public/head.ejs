@@ -4,17 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><%= title %></title>
-    <style>
-      body {
-        padding: 50px;
-        font: 13px Helvetica, Arial, sans-serif;
-      }
-      .error {
-          color: red
-      }
-      .success {
-          color: green;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <script src="https://cdn.anychart.com/releases/8.0.0/js/anychart-base.min.js"></script>
   </head>
+  <nav>
+    <ul>
+      <% if (user) { %>
+        <li><h1><%= user.username %></h1></li>
+        <li><a href="/create-voting" style="text-decoration: none;"><h1>Create voting</h1></a></li>
+      <% } else { %>
+        <li><a href="/login" style="text-decoration: none;"><h1>Account</h1></a></li>
+      <% } %>
+      <li><a href="/voting-list" style="text-decoration: none;"><h1>Votings</h1></a></li>
+      <% if (user) { %>
+        <li><a href="/logout" style="text-decoration: none;"><h1>Logout</h1></a></li>
+      <%} %>
+    </ul>
+  </nav>
   <body>

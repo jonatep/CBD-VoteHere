@@ -7,6 +7,11 @@ The code using rethinkdb is in the file `app.js`.
 
 Run `npm install` to install the dependencies.
 
+Start the RethinkDB database by executing:
+```
+docker run -d -P --name rethink1 rethinkdb
+```
+
 Start the server with
 ```
 node app.js
