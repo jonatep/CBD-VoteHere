@@ -14,12 +14,13 @@
       <script>
         var botonVotacion = document.createElement("button");
         var voting_id = "<%= votacion.id %>"
+        var voting_name = "<%= votacion.name %>"
         var enlace_boton = document.createElement("a");
         enlace_boton.id = voting_id;
         var enlace = "/voting/" + voting_id;
         enlace_boton.setAttribute('href', enlace);
         botonVotacion.type = "submit";
-        botonVotacion.textContent = voting_id;
+        botonVotacion.textContent = voting_name;
         enlace_boton.appendChild(botonVotacion);
         document.getElementById("votaciones").appendChild(enlace_boton);
       </script>
