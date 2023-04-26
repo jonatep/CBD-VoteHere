@@ -1,0 +1,80 @@
+<%- include('head', { title: 'Voting Creation' }) -%>
+<head>
+  <title>Votings</title>
+</head>
+<body>
+  <header>
+    <h1>Votings</h1>
+  </header>
+  <div id="container">
+    <div id="votacion">
+
+    </div>
+    <% var dict_answers = {} %>
+    <% var rows = [] %>
+    <% answers = answers.find(x => x.group == voting.id) %>
+    <% if (answers != undefined) { %>
+      <% answers.reduction.forEach(function(answer){ %>
+        <% if(dict_answers[answer.option] != null ) { %>
+          <% dict_answers[answer.option] += 1 %>
+        <% } %>
+        <% if(dict_answers[answer.option] == null ) { %>
+          <% dict_answers[answer.option] = 1 %>
+        <% } %>
+      <% }) %>
+      <% Object.entries(dict_answers).forEach(([key, value]) => { %>
+        <% rows.push([key, value]) %>
+      <% }) %>
+    <% } %>
+
+      <script>
+        anychart.onDocumentReady(function() {
+          var user = "<%= user %>";
+          var rows_raw = "<%= rows %>";
+          var opciones = "<%= voting.opcion %>";
+          opciones = opciones.split(","); 
+          var rows = [];
+          console.log(rows_raw);
+          if (rows_raw != ""){
+            var match = rows_raw.match(/[^,]+,[^,]+/g);
+
+            match.forEach(function(pair) {
+              rows.push(pair.split(","));
+            });
+          }
+          
+          var data = {
+            header: ["Option", "Number of votes"],
+            rows: rows
+          };
+          var chart = anychart.column();
+          chart.data(data);
+          chart.title("<%= voting.name %>");
+          chart.container("votacion");
+          chart.draw();
+          if (user){
+            opciones.forEach(function(opcion) {
+              var nuevaOpcion = document.createElement("button");
+              nuevaOpcion.type = "submit";
+              nuevaOpcion.name = "option";
+              nuevaOpcion.id = "option";
+              nuevaOpcion.value = opcion;
+              nuevaOpcion.textContent = opcion;
+              nuevaOpcion.setAttribute("form","opcionesform");
+              document.getElementById("opciones").appendChild(nuevaOpcion);
+            });
+          };
+        });
+      </script>
+      <div id="opciones" style="margin-top: 5px; text-align: center;">
+        <% if (user) { %>
+        <form action="/answer-voting" id="opcionesform" name="opcionesform" style="display: none;" method="post">
+          <input type="text" name="voting" id="voting" value="<%= voting.id %>" hidden readonly>
+          <input type="text" name="usuarioid" id="usuarioid" value="<%= user.username %>" hidden readonly>
+        </form>
+        <%} %>
+      </div>
+  </div>
+</body>
+
+<%- include('foot') -%>

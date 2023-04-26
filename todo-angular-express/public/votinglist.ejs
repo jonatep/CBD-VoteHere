@@ -7,57 +7,24 @@
     <h1>Votings</h1>
   </header>
   <div id="container">
-    <div id="votacion">
+    <div id="votaciones">
 
     </div>
-    <% answers.forEach(function(group_answer) {%>
-      <% var voting = votings.find(x => x.id == group_answer.group) %>
-
-
     <% votings.forEach(function(votacion) { %>
       <script>
-        anychart.onDocumentReady(function() {
-          var rows = [];
-          var user = "<%= user %>";
-          var opciones = "<%= votacion.opcion %>";
-          opciones = opciones.split(",");
-          opciones.forEach(function(opcion) {
-            rows.push([opcion, 1]);
-          });
-          var data = {
-            header: ["Option", "Number of votes"],
-            rows: rows
-          };
-          var chart = anychart.column();
-          chart.data(data);
-          chart.title("<%= votacion.name %>");
-          chart.container("votacion");
-          chart.draw();
-          if (user){
-            opciones.forEach(function(opcion) {
-              var nuevaOpcion = document.createElement("button");
-              nuevaOpcion.type = "submit";
-              nuevaOpcion.name = "option";
-              nuevaOpcion.id = "option";
-              nuevaOpcion.value = opcion;
-              nuevaOpcion.textContent = opcion;
-              nuevaOpcion.setAttribute("form","opcionesform");
-              document.getElementById("opciones").appendChild(nuevaOpcion);
-            });
-          };
-        });
+        var botonVotacion = document.createElement("button");
+        var voting_id = "<%= votacion.id %>"
+        var enlace_boton = document.createElement("a");
+        enlace_boton.id = voting_id;
+        var enlace = "/voting/" + voting_id;
+        enlace_boton.setAttribute('href', enlace);
+        botonVotacion.type = "submit";
+        botonVotacion.textContent = voting_id;
+        enlace_boton.appendChild(botonVotacion);
+        document.getElementById("votaciones").appendChild(enlace_boton);
       </script>
-      <div id="opciones" style="margin-top: 5px; text-align: center;">
-        <% if (user) { %>
-        <form action="/answer-voting" id="opcionesform" name="opcionesform" style="display: none;" method="post">
-          <input type="text" name="voting" id="voting" value="<%= votacion.id %>" hidden readonly>
-          <input type="text" name="usuarioid" id="usuarioid" value="<%= user.username %>" hidden readonly>
-        </form>
-        <%} %>
-      </div>
       <% }) %>
 
-    <% }) %>
   </div>
 
 </body>

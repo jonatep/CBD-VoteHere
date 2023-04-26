@@ -56,6 +56,9 @@ app.route("/create-voting")
 app.route("/voting-list")
   .get(listVotings);
 
+app.route("/voting/:id")
+  .get(votingDetail);
+
 //Respuestas
 
 app.route("/answer-voting")
@@ -230,12 +233,34 @@ function createAnswerVoting(req, res, next) {
         return next(err);
       }
   
-      res.redirect("voting-list")
+      res.redirect('back');
     });
   }
   else{
     res.render("login", {user: req.body.user});
   }
+}
+//Detail of one voting
+function votingDetail(req, res, next) {
+  var votingId = req.params.id;
+
+  r.table('votings').get(votingId).run(req.app._rdbConn, function(err, voting) {
+    if(err) {
+      return next(err);
+    }
+    r.table('answers').group('voting').run(req.app._rdbConn, function(err, cursor) {
+      if(err){
+        return next(err);
+      }
+      cursor.toArray(function(err, answers_grouped) {
+        if(err) {
+          return next(err);
+        }
+        
+        res.render('votingdetail', {voting: voting, user:req.session.user, answers: answers_grouped});   
+      });
+    });
+  });
 }
 
 //Retrieve all votings
@@ -245,17 +270,11 @@ function listVotings(req, res, next) {
       return next(err);
     }    
     //Retrieve all the votings in an array.
-    cursor.toArray(function(err, result) {
+    cursor.toArray(function(err, votings) {
       if(err) {
         return next(err);
       }
-      var votings = result;
-        r.table('answers').group('voting').run(req.app._rdbConn, function(err, answers) {
-          if(err){
-            return next(err);
-          }
-          res.render('votinglist', {votings: votings, user:req.session.user, answers: answers});
-      });
+      res.render('votinglist', {votings: votings, user:req.session.user});
     });
   });
 }
