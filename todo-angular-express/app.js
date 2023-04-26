@@ -223,7 +223,6 @@ function createAnswerVoting(req, res, next) {
   authenticated = is_authenticated(req);
   if(authenticated){
     var answerItem = req.body;
-
     console.dir(answerItem);
   
     r.table('answers').insert(answerItem, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
@@ -241,32 +240,22 @@ function createAnswerVoting(req, res, next) {
 
 //Retrieve all votings
 function listVotings(req, res, next) {
-  res_answers = {};
   r.table('votings').run(req.app._rdbConn, function(err, cursor) {
     if(err) {
       return next(err);
-    }
-
+    }    
     //Retrieve all the votings in an array.
     cursor.toArray(function(err, result) {
       if(err) {
         return next(err);
       }
-
-      result.forEach(function(voting) {
-        r.table('answers').get(voting.id).run(req.app._rdbConn, function(err, answers) {
-          cursor.toArray(function(err, answers) {
-            if(err) {
-              return next(err);
-            }
-            console.log(answers);
-            res_answers[voting.id] = answers;
-          });
-
-        });
+      var votings = result;
+        r.table('answers').group('voting').run(req.app._rdbConn, function(err, answers) {
+          if(err){
+            return next(err);
+          }
+          res.render('votinglist', {votings: votings, user:req.session.user, answers: answers});
       });
-      console.log(res_answers);
-      res.render('votinglist', {votings: result, user:req.session.user, answers: res_answers});
     });
   });
 }
@@ -443,7 +432,7 @@ async.waterfall([
       return r.branch(
         containsTable,
         {created: 0},
-        r.tableCreate('answers', {primary_key: "voting"})
+        r.tableCreate('answers')
       );
     }).run(connection, function(err) {
       callback(err, connection);

@@ -10,8 +10,11 @@
     <div id="votacion">
 
     </div>
-    <% votings.forEach(function(votacion) { %>
+    <% answers.forEach(function(group_answer) {%>
+      <% var voting = votings.find(x => x.id == group_answer.group) %>
 
+
+    <% votings.forEach(function(votacion) { %>
       <script>
         anychart.onDocumentReady(function() {
           var rows = [];
@@ -52,6 +55,8 @@
         </form>
         <%} %>
       </div>
+      <% }) %>
+
     <% }) %>
   </div>
 
