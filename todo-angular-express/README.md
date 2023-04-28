@@ -16,6 +16,8 @@ Start the server with
 ```
 node app.js
 ```
+npm install moment --save
+npm install faker --save-dev
 
 
 ### Original source ###

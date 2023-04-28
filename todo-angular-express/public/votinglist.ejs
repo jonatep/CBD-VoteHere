@@ -12,6 +12,21 @@
     </div>
     <% votings.forEach(function(votacion) { %>
       <script>
+        var today = new Date();
+        var last_date = "<%= votacion.last_date %>";
+        var last_hour = "<%= votacion.last_hour %>";
+        var [year, month, day] = last_date.split('-');
+        var [hour, minutes] = last_hour.split(':');
+        var seconds = 0;
+        var last_date = new Date(
+          +year,
+          +month -1,
+          +day,
+          +hour,
+          +minutes,
+          +seconds
+        );
+
         var botonVotacion = document.createElement("button");
         var voting_id = "<%= votacion.id %>"
         var voting_name = "<%= votacion.name %>"
@@ -22,6 +37,9 @@
         botonVotacion.type = "submit";
         botonVotacion.textContent = voting_name;
         enlace_boton.appendChild(botonVotacion);
+        if (today > last_date){
+          botonVotacion.setAttribute("style", "background-color:#ec4c4c");
+        }
         document.getElementById("votaciones").appendChild(enlace_boton);
       </script>
       <% }) %>

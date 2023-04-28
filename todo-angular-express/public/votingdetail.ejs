@@ -1,4 +1,4 @@
-<%- include('head', { title: 'Voting Creation' }) -%>
+<%- include('head', { title: 'Voting Details' }) -%>
 <head>
   <title>Votings</title>
 </head>
@@ -67,7 +67,14 @@
         });
       </script>
       <div id="opciones" style="margin-top: 5px; text-align: center;">
-        <% if (user) { %>
+        <% var today = new Date() %>
+        <% var last_date = votacion.last_date  %>
+        <% var last_hour = votacion.last_hour %>
+        <% var [year, month, day] = last_date.split('-') %>
+        <% var [hour, minutes] = last_hour.split(':') %>
+        <% var seconds = 0 %>
+        <% var last_date = new Date(+year, +month -1, +day, +hour, +minutes,+seconds) %>
+        <% if ((user) || today > last_date) { %>
         <form action="/answer-voting" id="opcionesform" name="opcionesform" style="display: none;" method="post">
           <input type="text" name="voting" id="voting" value="<%= voting.id %>" hidden readonly>
           <input type="text" name="usuarioid" id="usuarioid" value="<%= user.username %>" hidden readonly>

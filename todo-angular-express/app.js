@@ -11,6 +11,7 @@ var app = express();
 var hash = require('pbkdf2-password')()
 var path = require('path');
 var session = require('express-session');
+const moment = require('moment');
 
 //For serving the index.html and all the other front-end assets.
 app.use(express.static(__dirname + '/public'));
@@ -25,16 +26,6 @@ app.use(session({
   saveUninitialized: false, // don't create session until something stored
   secret: 'shhhh, very secret'
 }));
-
-//The REST routes for "todos".
-app.route('/todos')
-  .get(listTodoItems)
-  .post(createTodoItem);
-
-app.route('/todos/:id')
-  .get(getTodoItem)
-  .put(updateTodoItem)
-  .delete(deleteTodoItem);
 
 //Autenticacion
 app.route("/login")
@@ -63,6 +54,12 @@ app.route("/voting/:id")
 
 app.route("/answer-voting")
   .post(createAnswerVoting);
+
+
+//Prueba base de datos
+app.route("/test-batabase")
+  .get(newDatabase);
+  
 //If we reach this middleware the route could not be handled and must be unknown.
 app.use(handle404);
 
@@ -227,6 +224,12 @@ function createAnswerVoting(req, res, next) {
   if(authenticated){
     var answerItem = req.body;
     console.dir(answerItem);
+
+    r.table('answers').filter({usuarioid: answerItem.usuarioid, voting: answerItem.voting}).delete().run(req.app._rdbConn, function(err, resut){
+      if(err){
+        return next(err);
+      }
+    });
   
     r.table('answers').insert(answerItem, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
       if(err) {
@@ -279,91 +282,65 @@ function listVotings(req, res, next) {
   });
 }
 
+//Create database
+function newDatabase(req, res, next) {
+  var faker = require('faker');
+  var moment = require('moment');
 
-/*
- * Retrieve all todo items.
- */
-function listTodoItems(req, res, next) {
-  r.table('todos').orderBy({index: 'createdAt'}).run(req.app._rdbConn, function(err, cursor) {
-    if(err) {
-      return next(err);
-    }
+  i = 1;
+  while(i<=25){
+    id = i;
+    var name = faker.firstName();
+    var description = faker.lorem.words();
+    var fecha = faker.date.future();
+    var moment = moment(fecha);
+    var fecha = moment.format('YYYY-MM-DD');
+    var hora = moment().format('hh:mm')
 
-    //Retrieve all the todos in an array.
-    cursor.toArray(function(err, result) {
+    var dic = {'id':id,'name':name,'description':description,'last_date':fecha,'last_hour':hora,'opcion':['1','2','3','4','5']}
+
+    r.table('votings').insert(dic, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
       if(err) {
         return next(err);
       }
-
-      res.json(result);
     });
-  });
+  }
+
+  i = 1;
+  while(i<=500){
+    var username = faker.name.username();
+    var pass = '12Pass34';
+    hash({ password: pass }, function (err, pass, salt, hash) {
+      if (err) throw err;
+  
+      var salt_user = salt;
+      var hash_user = hash;
+
+      var dic = {'username':username,'salt':salt_user,'hash':hash_user};
+
+      r.table('users').insert(dic, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
+        if(err) {
+          return next(err);
+        }
+      });
+    });
+
+    var opciones = ['1','2','3','4','5'];
+    var indiceAleatorio = Math.floor(Math.random() * opciones.length);
+    var min = 1;
+    var max = 25;
+    var numeroAleatorio = Math.floor(Math.random()*(max-min+1)) + min;
+    var dic = {'id':i,'option':opciones[indiceAleatorio],'usuarioid':username,'voting':numeroAleatorio};
+
+    r.table('answers').insert(dic, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
+      if(err) {
+        return next(err);
+      }
+    });
+
+    i++; 
+  }
 }
-
-/*
- * Insert a new todo item.
- */
-function createTodoItem(req, res, next) {
-  var todoItem = req.body;
-  todoItem.createdAt = r.now();
-
-  console.dir(todoItem);
-
-  r.table('todos').insert(todoItem, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
-    if(err) {
-      return next(err);
-    }
-
-    res.json(result.changes[0].new_val);
-  });
-}
-
-/*
- * Get a specific todo item.
- */
-function getTodoItem(req, res, next) {
-  var todoItemID = req.params.id;
-
-  r.table('todos').get(todoItemID).run(req.app._rdbConn, function(err, result) {
-    if(err) {
-      return next(err);
-    }
-
-    res.json(result);
-  });
-}
-
-/*
- * Update a todo item.
- */
-function updateTodoItem(req, res, next) {
-  var todoItem = req.body;
-  var todoItemID = req.params.id;
-
-  r.table('todos').get(todoItemID).update(todoItem, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
-    if(err) {
-      return next(err);
-    }
-
-    res.json(result.changes[0].new_val);
-  });
-}
-
-/*
- * Delete a todo item.
- */
-function deleteTodoItem(req, res, next) {
-  var todoItemID = req.params.id;
-
-  r.table('todos').get(todoItemID).delete().run(req.app._rdbConn, function(err, result) {
-    if(err) {
-      return next(err);
-    }
-
-    res.json({success: true});
-  });
-}
-
 /*
  * Page-not-found middleware.
  */
@@ -409,18 +386,6 @@ async.waterfall([
       callback(err, connection);
     });
   },
-  function createTable(connection, callback) {
-    //Create the table if needed.
-    r.tableList().contains('todos').do(function(containsTable) {
-      return r.branch(
-        containsTable,
-        {created: 0},
-        r.tableCreate('todos')
-      );
-    }).run(connection, function(err) {
-      callback(err, connection);
-    });
-  },
   function createUsers(connection, callback) {
     //Create the table of users if needed.
     r.tableList().contains('users').do(function(containsTable) {
@@ -457,24 +422,6 @@ async.waterfall([
       callback(err, connection);
     });
   },
-  function createIndex(connection, callback) {
-    //Create the index if needed.
-    r.table('todos').indexList().contains('createdAt').do(function(hasIndex) {
-      return r.branch(
-        hasIndex,
-        {created: 0},
-        r.table('todos').indexCreate('createdAt')
-      );
-    }).run(connection, function(err) {
-      callback(err, connection);
-    });
-  },
-  function waitForIndex(connection, callback) {
-    //Wait for the index to be ready.
-    r.table('todos').indexWait('createdAt').run(connection, function(err, result) {
-      callback(err, connection);
-    });
-  }
 ], function(err, connection) {
   if(err) {
     console.error(err);
