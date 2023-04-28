@@ -1,14 +1,15 @@
 <%- include('head', { title: 'Voting Details' }) -%>
 <head>
-  <title>Votings</title>
+  <title>Voting</title>
 </head>
 <body>
   <header>
-    <h1>Votings</h1>
+    <h1>Voting</h1>
   </header>
   <div id="container">
     <div id="votacion">
-
+      <h2><%= voting.description %></h2>
+      <h3>Fecha límite para votar: <%= voting.last_date %> - <%= voting.last_hour %></h3>
     </div>
     <% var dict_answers = {} %>
     <% var rows = [] %>
@@ -29,6 +30,21 @@
 
       <script>
         anychart.onDocumentReady(function() {
+          var today = new Date();
+          var last_date = "<%= voting.last_date %>";
+          var last_hour = "<%= voting.last_hour %>";
+          var [year, month, day] = last_date.split('-');
+          var [hour, minutes] = last_hour.split(':');
+          var seconds = 0;
+          var last_date = new Date(
+            +year,
+            +month -1,
+            +day,
+            +hour,
+            +minutes,
+            +seconds
+          );
+
           var user = "<%= user %>";
           var rows_raw = "<%= rows %>";
           var opciones = "<%= voting.opcion %>";
@@ -52,7 +68,7 @@
           chart.title("<%= voting.name %>");
           chart.container("votacion");
           chart.draw();
-          if (user){
+          if (user && today < last_date){
             opciones.forEach(function(opcion) {
               var nuevaOpcion = document.createElement("button");
               nuevaOpcion.type = "submit";
@@ -67,14 +83,7 @@
         });
       </script>
       <div id="opciones" style="margin-top: 5px; text-align: center;">
-        <% var today = new Date() %>
-        <% var last_date = votacion.last_date  %>
-        <% var last_hour = votacion.last_hour %>
-        <% var [year, month, day] = last_date.split('-') %>
-        <% var [hour, minutes] = last_hour.split(':') %>
-        <% var seconds = 0 %>
-        <% var last_date = new Date(+year, +month -1, +day, +hour, +minutes,+seconds) %>
-        <% if ((user) || today > last_date) { %>
+        <% if (user) { %>
         <form action="/answer-voting" id="opcionesform" name="opcionesform" style="display: none;" method="post">
           <input type="text" name="voting" id="voting" value="<%= voting.id %>" hidden readonly>
           <input type="text" name="usuarioid" id="usuarioid" value="<%= user.username %>" hidden readonly>

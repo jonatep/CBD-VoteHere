@@ -10,7 +10,10 @@
     "express-session": "^1.17.3",
     "moment": "^2.29.4",
     "pbkdf2-password": "^1.2.1",
-    "rethinkdb": "^2.4.2",
-    "faker": "^6.6.6"
+    "rethinkdb": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/faker": "^6.6.9",
+    "faker": "^5.5.3"
   }
 }

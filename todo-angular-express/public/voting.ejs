@@ -13,23 +13,23 @@
       <form method="post" action="/create-voting">
         <div>
           <label for="name">Name:</label>
-          <input type="text" name="name" id="name">
+          <input type="text" name="name" id="name" required=true>
         </div>
         <div style="margin-top: 5px;">
           <label for="description">Description:</label>
-          <input type="text" name="description" id="description">
+          <input type="text" name="description" id="description" required=true>
         </div>
         <div style="margin-top: 5px;">
           <label for="last_date">Fecha límite:</label>
-          <input type="date" name="last_date" id="last_date">
+          <input type="date" name="last_date" id="last_date" required=true>
         </div>
         <div style="margin-top: 5px;">
           <label for="last_hour">Hora límite:</label>
-          <input type="time" name="last_hour" id="last_hour" min="00:00" max="23:59">
+          <input type="time" name="last_hour" id="last_hour" min="00:00" max="23:59" required=true>
         </div>
         <div style="margin-top: 5px;" id="opciones">
           <label for="opcion">Opciones:</label>
-          <input type="text" id="opcion" name="opcion"/>
+          <input type="text" id="opcion" name="opcion" required=true/>
         </div>
         <div>
           <button type="button" onclick="agregarOpcion()">Agregar opción</button>

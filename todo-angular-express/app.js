@@ -180,7 +180,7 @@ function register(req, res, next) {
         return next(err);
       }
   
-      res.json(result.changes[0].new_val);
+      res.redirect("/login");
     });    
   });
 };
@@ -210,7 +210,7 @@ function createVotingItem(req, res, next) {
         return next(err);
       }
   
-      res.json(result.changes[0].new_val);
+      res.redirect("/voting-list");
     });
   }
   else{
@@ -247,7 +247,7 @@ function createAnswerVoting(req, res, next) {
 function votingDetail(req, res, next) {
   var votingId = req.params.id;
 
-  r.table('votings').get(votingId).run(req.app._rdbConn, function(err, voting) {
+  r.table('votings').get(votingId.toString()).run(req.app._rdbConn, function(err, voting) {
     if(err) {
       return next(err);
     }
@@ -286,29 +286,28 @@ function listVotings(req, res, next) {
 function newDatabase(req, res, next) {
   var faker = require('faker');
   var moment = require('moment');
-
   i = 1;
   while(i<=25){
     id = i;
-    var name = faker.firstName();
+    var name = faker.name.firstName();
     var description = faker.lorem.words();
     var fecha = faker.date.future();
-    var moment = moment(fecha);
-    var fecha = moment.format('YYYY-MM-DD');
-    var hora = moment().format('hh:mm')
+    var fecha = moment(fecha).format('YYYY-MM-DD');
+    var hora = moment(fecha).format('hh:mm')
 
-    var dic = {'id':id,'name':name,'description':description,'last_date':fecha,'last_hour':hora,'opcion':['1','2','3','4','5']}
+    var dic = {'id':id.toString(),'name':name,'description':description,'last_date':fecha,'last_hour':hora,'opcion':['1','2','3','4','5']}
 
     r.table('votings').insert(dic, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
       if(err) {
         return next(err);
       }
     });
+    i++;
   }
 
   i = 1;
   while(i<=500){
-    var username = faker.name.username();
+    var username = faker.internet.userName();
     var pass = '12Pass34';
     hash({ password: pass }, function (err, pass, salt, hash) {
       if (err) throw err;
@@ -330,7 +329,7 @@ function newDatabase(req, res, next) {
     var min = 1;
     var max = 25;
     var numeroAleatorio = Math.floor(Math.random()*(max-min+1)) + min;
-    var dic = {'id':i,'option':opciones[indiceAleatorio],'usuarioid':username,'voting':numeroAleatorio};
+    var dic = {'id':i.toString(),'option':opciones[indiceAleatorio],'usuarioid':username,'voting':numeroAleatorio.toString()};
 
     r.table('answers').insert(dic, {returnChanges: true}).run(req.app._rdbConn, function(err, result) {
       if(err) {
@@ -340,6 +339,7 @@ function newDatabase(req, res, next) {
 
     i++; 
   }
+  res.redirect("/voting-list");
 }
 /*
  * Page-not-found middleware.
@@ -404,7 +404,7 @@ async.waterfall([
       return r.branch(
         containsTable,
         {created: 0},
-        r.tableCreate('votings')
+        r.tableCreate('votings', {primary_key: "id"})
       );
     }).run(connection, function(err) {
       callback(err, connection);
