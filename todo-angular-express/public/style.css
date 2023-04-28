@@ -50,3 +50,7 @@ button {
 input[type="submit"]:hover {
     background-color: #1d4e89;
 }
+div#votacion {
+    padding: 50px;
+    margin-bottom: 50px;
+}

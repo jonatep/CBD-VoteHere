@@ -28,6 +28,9 @@ app.use(session({
 }));
 
 //Autenticacion
+app.route("")
+  .get(view_login);
+
 app.route("/login")
   .get(view_login)
   .post(login_post);

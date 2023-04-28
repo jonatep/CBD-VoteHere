@@ -1,6 +1,7 @@
 <%- include('head', { title: 'Voting Details' }) -%>
 <head>
   <title>Voting</title>
+  <link rel="stylesheet" type="text/css" href="../style.css"/>
 </head>
 <body>
   <header>
@@ -57,7 +58,7 @@
             match.forEach(function(pair) {
               rows.push(pair.split(","));
             });
-          }
+          };
           
           var data = {
             header: ["Option", "Number of votes"],
